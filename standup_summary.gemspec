@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Quick git-standup summary'
   spec.description = 'Git-standup summary with easy day/week/month switching'
-  #spec.homepage = "TODO: Put your gem's website or public repo URL here."
+  spec.homepage = "https://github.com/podruh/standup_summary"
   spec.license = 'MIT'
 
   # Specify which files should be added to the gem when it is released.
