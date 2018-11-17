@@ -1,0 +1,1 @@
+require 'standup_summary'

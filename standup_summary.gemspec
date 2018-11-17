@@ -1,16 +1,16 @@
 lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'standup_summary/version'
+require 'standup-summary/version'
 
 Gem::Specification.new do |spec|
-  spec.name = 'standup_summary'
+  spec.name = 'standup-summary'
   spec.version = StandupSummary::VERSION
   spec.authors = ['David Podroužek']
   spec.email = ['podruh01@gmail.com']
 
   spec.summary = 'Quick git-standup summary'
   spec.description = 'Git-standup summary with easy day/week/month switching'
-  spec.homepage = "https://github.com/podruh/standup_summary"
+  spec.homepage = "https://github.com/podruh/standup-summary"
   spec.license = 'MIT'
 
   # Specify which files should be added to the gem when it is released.
@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
     `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   end
   spec.bindir = 'bin'
-  spec.executables = ['standup_summary', 'standup']
+  spec.executables = ['standup']
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '~> 1.16'
