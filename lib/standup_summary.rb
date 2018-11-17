@@ -6,7 +6,7 @@ require 'active_support/core_ext/date'
 require 'active_support/core_ext/time'
 
 module StandupSummary
-  module CLI
+  class CLI
 
     def initialize
       @path = "#{ENV['HOME']}/"
