@@ -21,8 +21,14 @@ Or install it yourself as:
     $ gem install standup-summary
 
 ## Usage
+Use `standup` in your command line with these options:
 
-TODO: Write usage instructions here
+| Option      |                             Description                            |
+|-------------|:------------------------------------------------------------------:|
+| -p, --path  | Sets path to execute git-standup from, relative to your $HOME path |
+| -t, --today | Use commits from today                                             |
+| -w, --week  | Use commits from this week                                         |
+| -m, --month | Use commits from this month                                        |
 
 ## Development
 
