@@ -14,9 +14,9 @@ module StandupSummary
       @date = Date.current
       @args = "-A \"#{@date} 00:00\" -B \"#{@date} 23:59\""
       parser = OptionParser.new do |opts|
-        opts.banner = "Usage: standup.rb [options]"
+        opts.banner = "Usage: standup / standup_summary [options]"
 
-        opts.on('-pPATH', '--path PATH', String, "Where to scan stand-up(relative to your home directory)") do |path|
+        opts.on('-p PATH', '--path PATH', String, "Where to scan stand-up (relative to your home directory)") do |path|
           @path += path
         end
 
