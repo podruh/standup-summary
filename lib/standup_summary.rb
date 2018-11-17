@@ -1,4 +1,4 @@
-require "standup_summary/version"
+require "standup-summary/version"
 require 'optparse'
 require 'date'
 require 'active_support'
