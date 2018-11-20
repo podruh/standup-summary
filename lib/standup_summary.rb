@@ -13,11 +13,16 @@ module StandupSummary
       @time_span = :today
       @date = Date.current
       @args = "-A \"#{@date} 00:00\" -B \"#{@date} 23:59\""
+      @days = nil
       parser = OptionParser.new do |opts|
         opts.banner = "Usage: standup / standup_summary [options]"
 
         opts.on('-p PATH', '--path PATH', String, "Where to scan stand-up (relative to your home directory)") do |path|
           @path += path
+        end
+
+        opts.on('-d DAYS', '--days DAYS', Integer, "Specify the number of days back to include, same as 'git standup -d', ignores any other time param") do |days|
+          @days = days
         end
 
         opts.on('-t', '--today', "Displays today standup") do
@@ -41,6 +46,7 @@ module StandupSummary
     end
 
     def run
+      @args = "-d #{@days}"
       puts "Entering #{@path} ..."
 
       Dir.chdir(@path) do
@@ -66,7 +72,7 @@ module StandupSummary
         project_hash.each do |project, hash|
           project = +project
           project.slice!("#{@path}/")
-          puts "#{project} commits: #{hash[:count]}/#{hash[:percentage].floor(2)}%"
+          puts "#{project}: #{hash[:count]} / #{hash[:percentage].floor(2)}%"
         end
       end
     end
