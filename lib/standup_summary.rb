@@ -1,4 +1,5 @@
 require "standup-summary/version"
+require "standup-summary/diff_analyzer"
 require 'optparse'
 require 'date'
 require 'active_support'
@@ -14,6 +15,8 @@ module StandupSummary
       @date = Date.current
       @args = "-A \"#{@date} 00:00\" -B \"#{@date} 23:59\""
       @days = nil
+      @mode = :commits
+      @diff_options = { recursive: false, limit: 3 }
       parser = OptionParser.new do |opts|
         opts.banner = "Usage: standup / standup_summary [options]"
 
@@ -21,7 +24,7 @@ module StandupSummary
           @path += path
         end
 
-        opts.on('-d DAYS', '--days DAYS', Integer, "Specify the number of days back to include, same as 'git standup -d', ignores any other time param") do |days|
+        opts.on('-d DAYS', '--days days', Integer, "Specify the number of days back to include, same as 'git standup -d', ignores any other time param") do |days|
           @days = days
         end
 
@@ -37,6 +40,23 @@ module StandupSummary
           @args = "-A \"#{@date.beginning_of_month} 00:00\" -B \"#{@date.end_of_month} 23:59\""
         end
 
+        opts.on('-f', '--diff', "Analyze diffs instead of commits") do
+          @mode = :diffs
+        end
+
+        opts.on('-r', '--recursive', "When using -f go through folders recursively, use -l option to set limit") do
+          @diff_options[:recursive] = true
+        end
+
+        opts.on('-v', '--version', "Print out version") do
+          puts "\nStandupSummary by David Podroužek \nversion: #{StandupSummary::VERSION}"
+          exit 0
+        end
+
+        opts.on('-l LIMIT', '--limit LIMIT', Integer, "Set limit for options -r -f defaults to 3") do |limit = 3|
+          @diff_options[:limit] = limit
+        end
+
         opts.on('-h', '--help', 'Displays Help') do
           puts opts
           exit
@@ -45,8 +65,18 @@ module StandupSummary
       parser.parse!
     end
 
+    # TODO:
+    # Use this example:
+    #   $ git diff HEAD 'HEAD@{3 weeks ago}' --shortstat -b -w
+    # to go through each directory and analyze output "202 files changed, 401 insertions(+), 2959 deletions(-)"
+    # Preferably use threads to increase performance
+    # add option for shallow loop or deep with limit, default could be 10
     def run
-      @args = "-d #{@days}"
+      if @mode == :diffs
+        DiffAnalyzer.new(@path, @diff_options).run!
+        return
+      end
+      @args = "-d #{@days}" if @days.present?
       puts "Entering #{@path} ..."
 
       Dir.chdir(@path) do
