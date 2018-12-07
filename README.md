@@ -27,6 +27,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Todo
 
+- add option to analyze diffs
 - support for ruby controll
 
 ## Contributing
