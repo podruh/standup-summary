@@ -51,7 +51,8 @@ module StandupSummary
     end
 
     def analyze_dir(path)
-      project = path.gsub(@path, '')[1..-1]
+      project = path.gsub(@path, '')
+      project = project[1..-1] if project[0] == '/'
       result = { path: project }
       STATS.each { |s| result[s] = 0 }
       test = /\s?((?<changed>\d+) files changed)?,?\s((?<insertions>\d+) insertions\(\+\))?,?\s?((?<deletions>\d+) deletions\(\-\))?/
