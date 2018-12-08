@@ -11,41 +11,47 @@ module StandupSummary
 
     def initialize
       @path = "#{ENV['HOME']}/"
-      @time_span = :today
       @date = Date.current
-      @args = "-A \"#{@date} 00:00\" -B \"#{@date} 23:59\""
-      @days = nil
-      @mode = :commits
-      @diff_options = { recursive: false, limit: 3 }
+      @options = { path: "#{ENV['HOME']}/",
+                   recursive: false,
+                   limit: 3,
+                   mode: :commits,
+                   days: nil,
+                   from: @date,
+                   to: @date }
       parser = OptionParser.new do |opts|
         opts.banner = "Usage: standup / standup_summary [options]"
 
         opts.on('-p PATH', '--path PATH', String, "Where to scan stand-up (relative to your home directory)") do |path|
-          @path += path
+          @options[:path] += path
         end
 
         opts.on('-d DAYS', '--days days', Integer, "Specify the number of days back to include, same as 'git standup -d', ignores any other time param") do |days|
-          @days = days
+          @options[:days] = days
         end
 
         opts.on('-t', '--today', "Displays today standup") do
-          @args = "-A \"#{@date} 00:00\" -B \"#{@date} 23:59\""
+          @options[:from] = @date
+          @options[:to] = @date
         end
 
         opts.on('-w', '--week', "Displays standup for this week") do
-          @args = "-A \"#{@date.beginning_of_week} 00:00\" -B \"#{@date.beginning_of_week + 4} 23:59\""
+          @options[:from] = @date.beginning_of_week
+          @options[:to] = @date.beginning_of_week + 4
         end
 
         opts.on('-m', '--month', "Displays standup for this month") do
-          @args = "-A \"#{@date.beginning_of_month} 00:00\" -B \"#{@date.end_of_month} 23:59\""
+          @options[:from] = @date.beginning_of_month
+          @options[:to] = @date.end_of_month
+
         end
 
         opts.on('-f', '--diff', "Analyze diffs instead of commits") do
-          @mode = :diffs
+          @options[:mode] = :diffs
         end
 
         opts.on('-r', '--recursive', "When using -f go through folders recursively, use -l option to set limit") do
-          @diff_options[:recursive] = true
+          @options[:recursive] = true
         end
 
         opts.on('-v', '--version', "Print out version") do
@@ -54,7 +60,7 @@ module StandupSummary
         end
 
         opts.on('-l LIMIT', '--limit LIMIT', Integer, "Set limit for options -r -f defaults to 3") do |limit = 3|
-          @diff_options[:limit] = limit
+          @options[:limit] = limit
         end
 
         opts.on('-h', '--help', 'Displays Help') do
@@ -72,21 +78,26 @@ module StandupSummary
     # Preferably use threads to increase performance
     # add option for shallow loop or deep with limit, default could be 10
     def run
-      if @mode == :diffs
-        DiffAnalyzer.new(@path, @diff_options).run!
+      if @options[:mode] == :diffs
+        DiffAnalyzer.new(@options[:path], @options).run!
         return
       end
-      @args = "-d #{@days}" if @days.present?
-      puts "Entering #{@path} ..."
 
-      Dir.chdir(@path) do
+      if @options[:days].present?
+        @args = "-d #{@options[:days]}"
+      else
+        @args = "-A \"#{@options[:from]} 00:00\" -B \"#{@options[:to]} 23:59\""
+      end
+      puts "Entering #{@options[:path]} ..."
+
+      Dir.chdir(@options[:path]) do
         cmd = "git standup -s #{@args}"
         puts "Running #{cmd}"
         puts
         out = `#{cmd}`
         # out.split(/\/home\/.*$/)
-        total_count = `#{cmd} | grep -v #{@path}* -c`
-        projects = `#{cmd} | grep #{@path}* --color=never`
+        total_count = `#{cmd} | grep -v #{@options[:path]}* -c`
+        projects = `#{cmd} | grep #{@options[:path]}* --color=never`
         projects = projects.split("\n")
         project_hash = {}
         commits_per_project = out.split(/\/home\/.*$/)
@@ -101,7 +112,7 @@ module StandupSummary
         puts "Total projects: #{projects.size}, total commits: #{total_count}"
         project_hash.each do |project, hash|
           project = +project
-          project.slice!("#{@path}/")
+          project.slice!("#{@options[:path]}/")
           puts "#{project}: #{hash[:count]} / #{hash[:percentage].floor(2)}%"
         end
       end

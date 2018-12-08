@@ -8,7 +8,9 @@ module StandupSummary
       @path = path
       @limit = options[:limit]
       @use_recursive = options[:recursive]
-      @results = {directories: [], changed: 0, insertions: 0, deletions: 0, length: 0}
+      @options = options
+      @results = { directories: [], changed: 0, insertions: 0, deletions: 0, length: 0 }
+      @author_name = `git config user.name`.gsub("\n", '')
     end
 
     def run!
@@ -40,19 +42,29 @@ module StandupSummary
       end
     end
 
+    def cmd
+      @cmd ||= if @options[:days].present?
+                 "git log --shortstat --format= --committer=\"#{@author_name}\" --since=\"#{@options[:days]} days ago\""
+               else
+                 "git log --shortstat --format= --committer=\"#{@author_name}\" --after=\"#{@options[:from]} 00:00\" --before=\"#{@options[:to]} 23:59\""
+               end
+    end
+
     def analyze_dir(path)
       project = path.gsub(@path, '')[1..-1]
-      result = {path: project}
-      STATS.each {|s| result[s] = 0}
+      result = { path: project }
+      STATS.each { |s| result[s] = 0 }
       test = /\s?((?<changed>\d+) files changed)?,?\s((?<insertions>\d+) insertions\(\+\))?,?\s?((?<deletions>\d+) deletions\(\-\))?/
       Dir.chdir(path) do
-        out = `git diff HEAD 'HEAD@{3 weeks ago}' --shortstat -b -w 2> /dev/null`
+        out = `#{cmd}`
         return if out.blank?
-        regex = test.match out
-        STATS.each do |stat|
-          val = regex[stat].nil? ? 0 : regex[stat].to_i
-          result[stat] = val
-          @results[stat] += val
+        out.split("\n").each do |line|
+          regex = test.match line
+          STATS.each do |stat|
+            val = regex[stat].nil? ? 0 : regex[stat].to_i
+            result[stat] += val
+            @results[stat] += val
+          end
         end
       end
       @results[:length] = project.length if @results[:length] < project.length
@@ -65,14 +77,29 @@ module StandupSummary
       path.split('/').count
     end
 
+    def print_header
+      puts "Standup Summary in #{@path}"
+      puts
+      header = 'Projects'.center(@results[:length]) + ' '
+      STATS.each do |s|
+        length = @results[s].to_s.length + 9
+        header += "| #{s.to_s.capitalize.center(length)}"
+      end
+      puts header
+      del = ''
+      header.length.times{del += '-'}
+      puts del
+    end
+
     def print_results
-      format = "%-#{@results[:length]}s"
-      STATS.each {|s|  format += " | #{s.to_s[0].upcase}: %d / %.2f %"}
+      print_header
+      format = "%-#{@results[:length]}s "
+      STATS.each { |s| format += "| %#{@results[s].to_s.length}d / %-6s" }
       @results[:directories].each do |result|
         args = [result[:path]]
         STATS.each do |s|
           args << result[s]
-          args << (result[s] / @results[s].to_f * 100)
+          args << "#{(result[s] / @results[s].to_f * 100).round(1)}%"
         end
 
         puts sprintf(format, *args)
