@@ -3,6 +3,7 @@ require 'find'
 module StandupSummary
   class DiffAnalyzer
     STATS = %i[changed insertions deletions]
+    TEST = /\s?((?<changed>\d+) files changed)?,?\s((?<insertions>\d+) insertions\(\+\))?,?\s?((?<deletions>\d+) deletions\(\-\))?/
 
     def initialize(path, options)
       @path = path
@@ -55,12 +56,11 @@ module StandupSummary
       project = project[1..-1] if project[0] == '/'
       result = { path: project }
       STATS.each { |s| result[s] = 0 }
-      test = /\s?((?<changed>\d+) files changed)?,?\s((?<insertions>\d+) insertions\(\+\))?,?\s?((?<deletions>\d+) deletions\(\-\))?/
       Dir.chdir(path) do
         out = `#{cmd}`
         return if out.blank?
         out.split("\n").each do |line|
-          regex = test.match line
+          regex = TEST.match line
           STATS.each do |stat|
             val = regex[stat].nil? ? 0 : regex[stat].to_i
             result[stat] += val
@@ -81,21 +81,24 @@ module StandupSummary
     def print_header
       puts "Standup Summary in #{@path}"
       puts
-      header = 'Projects'.center(@results[:length]) + ' '
+      header = 'Projects'.center(@results[:length] + 1) + ' '
       STATS.each do |s|
-        length = @results[s].to_s.length + 9
-        header += "| #{s.to_s.capitalize.center(length)}"
+        length = @results[s].to_s.length + 10
+        header += "|#{s.to_s.capitalize.center(length)}"
       end
-      puts header
       del = ''
-      header.length.times{del += '-'}
-      puts del
+      header.length.times { del += '-' }
+      puts '+' + del + '+'
+      puts '|' + header + '|'
+      puts '|' + del + '|'
+      '+' + del + '+'
     end
 
     def print_results
-      print_header
-      format = "%-#{@results[:length]}s "
-      STATS.each { |s| format += "| %#{@results[s].to_s.length}d / %-6s" }
+      footer = print_header
+      format = "| %-#{@results[:length]}s "
+      STATS.each { |s| format += "|%#{@results[s].to_s.length + 1}d / %-6s" }
+      format += '|'
       @results[:directories].each do |result|
         args = [result[:path]]
         STATS.each do |s|
@@ -105,6 +108,7 @@ module StandupSummary
 
         puts sprintf(format, *args)
       end
+      puts footer
     end
   end
 end
