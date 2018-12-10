@@ -1,5 +1,5 @@
-require 'byebug'
 require 'find'
+
 module StandupSummary
   class DiffAnalyzer
     STATS = %i[changed insertions deletions]
