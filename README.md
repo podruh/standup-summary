@@ -18,6 +18,9 @@ Use `standup` in your command line with these options:
 | -t, --today | Use commits from today                                             |
 | -w, --week  | Use commits from this week                                         |
 | -m, --month | Use commits from this month                                        |
+| -f, --diff  | Analyze diffs instead of commits                                   |
+| -r, --recursive  | When using -f go through folders recursively, use -l option to set limit|
+| -l, --limit LIMIT| Set limit for options -r -f, defaults to 3|
 
 ## Development
 
