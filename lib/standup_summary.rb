@@ -111,6 +111,8 @@ module StandupSummary
         end
         puts "Total projects: #{projects.size}, total commits: #{total_count}"
         project_hash.each do |project, hash|
+          next if project.nil?
+
           project = +project
           project.slice!("#{@options[:path]}/")
           puts "#{project}: #{hash[:count]} / #{hash[:percentage].floor(2)}%"
