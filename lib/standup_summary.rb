@@ -96,8 +96,8 @@ module StandupSummary
         puts
         out = `#{cmd}`
         # out.split(/\/home\/.*$/)
-        total_count = `#{cmd} | grep -v #{@options[:path]}* -c`
-        projects = `#{cmd} | grep #{@options[:path]}* --color=never`
+        total_count = `#{cmd} | grep -v "#{@options[:path]}/*" -c`
+        projects = `#{cmd} | grep "#{@options[:path]}/*" --color=never`
         projects = projects.split("\n")
         project_hash = {}
         commits_per_project = out.split(/\/home\/.*$/)
